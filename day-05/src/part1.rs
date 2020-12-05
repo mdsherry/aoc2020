@@ -1,5 +1,3 @@
-mod part1;
-
 static INPUT: &str = include_str!("input.txt");
 
 #[derive(Copy, Clone, Debug)]
@@ -9,8 +7,6 @@ enum Splits {
     Left,
     Right,
 }
-use std::collections::HashSet;
-
 use Splits::*;
 impl Splits {
     fn from(c: char) -> Self {
@@ -32,8 +28,7 @@ impl Splits {
 }
 
 fn main() {
-    
-    let seats: HashSet<_> = INPUT.lines().map(|line| {
+    let max = INPUT.lines().map(|line| {
         let row = &line[..7];
         let (top, bottom) = row.chars()
             .map(|c| Splits::from(c))
@@ -46,15 +41,10 @@ fn main() {
             .fold((0u8, 7u8), |(top, bottom), split| split.split(top, bottom));
         assert_eq!(left, right);
         let col = left;
-        (row, col)
-    }).collect();
-    // let expected_rows: HashSet<_> = (0..127).collect();
-    // let actual_rows: HashSet<_> = seats.iter().map(|x| x.0).collect();
-    // let mut missing: HashSet<_> = expected_rows.difference(&actual_rows).collect();
-    let expected_seats: HashSet<_> = (6..113).flat_map(|row| (0..7).map(move |col| (row, col))).collect();
-    for missing in expected_seats.difference(&seats) {
-        println!("{:?}: {}", missing, missing.0 as u16 * 8 + missing.1 as u16);
-    }
+        // (row, col)
+        row as u16 * 8 + col as u16
+    }).max().unwrap();
+    println!("{}", max);
 }
 
 #[cfg(test)]
