@@ -1,5 +1,3 @@
-mod part1;
-
 use std::collections::{HashMap, HashSet};
 
 static INPUT: &str = include_str!("input.txt");
@@ -12,18 +10,19 @@ fn main() {
             inv.entry(*subbag).or_default().push(rule);
         }
     }
-    let mut count = 0;
+    let mut seen = HashSet::new();
     let mut new_seen = Vec::new();
-    new_seen.push((1, Bag { modifier: Modifier::Shiny, colour: Colour::Gold }));
-    while let Some((n, bag)) = new_seen.pop() {
-        if let Some(rule) = rules.get(&bag) {
-            for (nn, subbag) in &rule.contents {
-                count += n * *nn;
-                new_seen.push((n * *nn, *subbag));
+    new_seen.push(Bag { modifier: Modifier::Shiny, colour: Colour::Gold });
+    while let Some(bag) = new_seen.pop() {
+        if let Some(rules) = inv.get(&bag) {
+            for holder in rules {
+                if seen.insert(holder.container) {
+                    new_seen.push(holder.container);
+                }
             }
         }
     }
-    println!("{}", count);
+    println!("{}", seen.len());
 }
 
 fn parse_rule(line: &str) -> Rule {
