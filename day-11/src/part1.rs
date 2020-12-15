@@ -9,20 +9,18 @@ static INPUT: &str = include_str!("input.txt");
 
 fn adjacent_filled(x: usize, y: usize, map: &Vec<Vec<State>>) -> u8 {
     let mut count = 0;
-    let max_x = map[0].len() as i32;
-    let max_y = map.len() as i32;
+    
     for &(dx, dy) in &[(-1i32, -1i32), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)] {
-        let mut ex = x as i32 + dx;
-        let mut ey = y as i32 + dy;
-        while ex >= 0 && ex < max_x && ey >= 0 && ey < max_y {
-            if map[ey as usize][ex as usize] == State::Full {
-                count += 1;
-                break;
-            } else if map[ey as usize][ex as usize] == State::Empty {
-                break;
-            }
-            ex += dx;
-            ey += dy;
+        if x == 0 && dx < 0 || y == 0 && dy < 0 {
+            continue;
+        }
+        let ex = (x as i32 + dx) as usize;
+        let ey = (y as i32+ dy) as usize;
+        if ey >= map.len() || ex >= map[0].len() {
+            continue;
+        }
+        if map[ey as usize][ex as usize] == State::Full {
+            count += 1;
         }
     }
     count
@@ -43,7 +41,7 @@ fn main() {
                 }
                 match adjacent_filled(x, y, &map) {
                     0 => other_map[y][x] = State::Full,
-                    n if n >= 5 => other_map[y][x] = State::Empty,
+                    n if n >= 4 => other_map[y][x] = State::Empty,
                     _ => other_map[y][x] = map[y][x]
                 }
             }
