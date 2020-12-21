@@ -22,21 +22,27 @@ impl Rule {
         }
     }
 
-    fn check<'a, 'b>(&self, rule_store: &'b HashMap<usize, Rule>, s: &'a str) -> Vec<&'a str> {
+    fn check<'a, 'b>(&self, rule_store: &'b HashMap<usize, Rule>, s: &'a str) -> Option<&'a str> {
         match self {
-            Rule::Lit(ch) => s.strip_prefix(*ch).into_iter().collect(),
-            Rule::Id(id) => rule_store[id].check(rule_store, s),
-            Rule::Seq(rules) => {
-                let mut state = vec![s];
-                for rule in rules {
-                    let mut new_state = vec![];
-                    new_state.extend(state.iter().flat_map(|s| rule.check(rule_store, s)));
-                    std::mem::swap(&mut state, &mut new_state);
+            Rule::Lit(ch) => {
+                if let Some(new_s) = s.strip_prefix(*ch) {
+                    Some(new_s)
+                } else {
+                    None
                 }
-                state
-            },
+            }
+            Rule::Id(id) => rule_store[id].check(rule_store, s),
+            Rule::Seq(rules) => rules.iter().fold(Some(s), |maybe_s, rule| {
+                maybe_s.and_then(|s| rule.check(rule_store, s))
+            }),
             Rule::Alt(rules) => {
-                rules.iter().flat_map(|rule| rule.check(rule_store, s)).collect()
+                for rule in rules {
+                    let result = rule.check(rule_store, s);
+                    if result.is_some() {
+                        return result;
+                    }
+                }
+                None
             }
         }
     }
@@ -54,16 +60,13 @@ fn main() {
             (id, rule)
         })
         .collect();
-    rule_store.insert(8, Rule::from_str("42 8 | 42"));
-    rule_store.insert(11, Rule::from_str("42 11 31| 42 31"));
+    // rule_store.insert(8, Rule::from_str("42 8 | 42"));
+    // rule_store.insert(11, Rule::from_str("42 31| 42 11 31"));
     // println!("{:#?}", rule_store);
 
-    let startend = Rule::Seq(vec![Rule::Lit('^'), Rule::Id(0), Rule::Lit('$')]);
-    
     let good_count = input.lines().skip_while(|s| !s.is_empty()).skip(1).filter(|&s|  {
-        let s = format!("^{}$", s);
-        let result = startend.check(&rule_store, &s);
-        result.iter().any(|r| r.is_empty())
+        let result = rule_store[&0].check(&rule_store, s);
+        if let Some(s) = result { s.is_empty() } else { false }
     }).count();
 
     println!("{}", good_count);

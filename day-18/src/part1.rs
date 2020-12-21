@@ -39,7 +39,6 @@ fn expr(s: &str) -> IResult<&str, Vec<Expr>> {
 }
 
 fn eval(exprs: &[Expr]) -> i64 {
-    let mut prods = vec![];
     let mut left = 0;
     let mut op = None;
     for expr in exprs {
@@ -49,10 +48,7 @@ fn eval(exprs: &[Expr]) -> i64 {
                 match op {
                     None => left = *n,
                     Some(Expr::Plus) => left = left + *n,
-                    Some(Expr::Times) => {
-                        prods.push(left);
-                        left = *n;
-                    },
+                    Some(Expr::Times) => left = left * *n,
                     _ => println!("Invalid op")
                 }
                 op = None;
@@ -65,17 +61,13 @@ fn eval(exprs: &[Expr]) -> i64 {
                 match op {
                     None => left = n,
                     Some(Expr::Plus) => left = left + n,
-                    Some(Expr::Times) => {
-                        prods.push(left);
-                        left = n;
-                    },
+                    Some(Expr::Times) => left = left * n,
                     _ => println!("Invalid op")
                 }
             }
         }
     }
-    prods.push(left);
-    prods.into_iter().fold(1, |a, b| a * b)
+    left
 }
 
 fn compute(s: &str) -> i64 {
@@ -97,6 +89,6 @@ mod test {
     use super::compute;
     #[test]
     fn blah() {
-        assert_eq!(231, compute("1 + 2 * 3 + 4 * 5 + 6"));
+        assert_eq!(13632, compute("((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"));
     }
 }

@@ -171,13 +171,7 @@ impl Tile {
         self.blocks.set(new_blocks);
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SeaCell {
-    Sea,
-    Wave,
-    Monster,
-}
-use SeaCell::*;
+
 fn main() {
     let tiles: Vec<_> = include_str!("input.txt")
         .split("\n\n")
@@ -191,7 +185,7 @@ fn main() {
         }
     }
 
-    let mut placements: HashMap<(i32, i32), _> = HashMap::new();
+    let mut placements = HashMap::new();
     placements.insert((0, 0), &tiles[0]);
     let mut to_process = vec![(0, 0)];
     let mut i = 0;
@@ -201,7 +195,7 @@ fn main() {
             break;
         }
         let tile = placements[&(next)];
-
+        
         if !placements.contains_key(&(next.0, next.1 + 1)) {
             let edge = tile.bottom_edge()[0];
 
@@ -211,6 +205,7 @@ fn main() {
                     .filter(|&&t| t.number != tile.number)
                     .next()
                 {
+                    
                     neighbour.reorient_to_top(edge);
                     neighbour.sealed.set(true);
                     placements.insert((next.0, next.1 + 1), *neighbour);
@@ -270,99 +265,19 @@ fn main() {
     let min_y = placements.keys().map(|k| k.1).min().unwrap();
     let max_x = placements.keys().map(|k| k.0).max().unwrap();
     let max_y = placements.keys().map(|k| k.1).max().unwrap();
-
-    let mut map =
-        vec![vec![Sea; (max_x - min_x + 1) as usize * 8]; (max_y - min_y + 1) as usize * 8];
     for y in min_y..=max_y {
-        let yy = y - min_y;
-        for x in min_x..=max_x {
-            let xx = x - min_x;
-            let block = placements[&(x, y)].blocks.get();
-            for (i, row) in block[1..9].iter().enumerate() {
-                for (j, col) in row[1..9].iter().enumerate() {
-                    map[yy as usize * 8 + i][xx as usize * 8 + j] = if *col { Wave } else { Sea };
+        for row in 0..10 {
+            for x in min_x..=max_x {
+                if let Some(tile) = placements.get(&(x, y)) {
+                    tile.render_line(row);
+                    print!("  ")
+                } else {
+                    print!("            ");
                 }
             }
+            println!();
         }
+        println!();
     }
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    flip_h(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    rotate_cw(&mut map);
-    monster_check(&mut map);
-    println!(".");
-    let wave_count: usize = map.into_iter().map(|row| row.into_iter().filter(|c| *c == Wave).count()).sum();
-    println!("{}", wave_count);
-    // println!("{}", placements[&(min_x, min_y)].number as u64 * placements[&(max_x, min_y)].number as u64 * placements[&(min_x, max_y)].number as u64 * placements[&(max_x, max_y)].number as u64);
-}
-
-fn monster_check(map: &mut Vec<Vec<SeaCell>>) {
-    for y in 0..map.len() - 3 {
-        for x in 0..map[0].len() - 20 {
-            let offsets = [
-                (0, 18),
-                (1, 0),
-                (1, 5),
-                (1, 6),
-                (1, 11),
-                (1, 12),
-                (1, 17),
-                (1, 18),
-                (1, 19),
-                (2, 1),
-                (2, 4),
-                (2, 7),
-                (2, 10),
-                (2, 13),
-                (2, 16),
-            ];
-            if offsets
-                .iter()
-                .copied()
-                .all(|(i, j)| map[y + i][x + j] != Sea)
-            {
-                println!("Sea monster!");
-                offsets
-                    .iter()
-                    .copied()
-                    .for_each(|(i, j)| map[y + i][x + j] = Monster)
-            }
-        }
-    }
-}
-
-fn flip_h(map: &mut Vec<Vec<SeaCell>>) {
-    map.iter_mut().for_each(|row| row.reverse());
-}
-
-fn flip_v(map: &mut Vec<Vec<SeaCell>>) {
-    map.reverse();
-}
-
-fn rotate_cw(map: &mut Vec<Vec<SeaCell>>) {
-    let mut new_map = map.clone();
-    for i in 0..map.len() {
-        for j in 0..map.len() {
-            new_map[i][map.len() - 1 - j] = map[j][i];
-        }
-    }
-    std::mem::swap(&mut new_map, map);
+    println!("{}", placements[&(min_x, min_y)].number as u64 * placements[&(max_x, min_y)].number as u64 * placements[&(min_x, max_y)].number as u64 * placements[&(max_x, max_y)].number as u64);
 }
